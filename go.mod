@@ -9,4 +9,5 @@ require (
 	github.com/smallnest/rpcx v0.0.0-20200213044823-78d7a4d32e2a
 	github.com/soheilhy/cmux v0.1.4
 	github.com/tidwall/redcon v1.2.1
+	golang.org/x/text v0.3.2
 )
