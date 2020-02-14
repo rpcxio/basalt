@@ -14,7 +14,7 @@ import (
 
 var (
 	addr       = flag.String("addr", "127.0.0.1:8972", "the listened address")
-	importData = flag.Bool("import-data", false, "need to import data")
+	importData = flag.Bool("import-data", true, "need to import data")
 )
 
 var x = fnv.New32()
