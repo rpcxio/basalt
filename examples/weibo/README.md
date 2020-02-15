@@ -1,8 +1,6 @@
 ## 新浪微博数据集MicroblogPCU
 
-https://archive.ics.uci.edu/ml/datasets/microblogPCU
-
-[MicroblogPCU](https://archive.ics.uci.edu/ml/machine-learning-databases/00323/)是从新浪微博採集到的。它能够被用于研究机器学习方法和社会关系研究。
+[MicroblogPCU](https://archive.ics.uci.edu/ml/machine-learning-databases/00323/)是数据集原作者从新浪微博采集到的。原本被用于[研究机器学习方法和社会关系研究](https://archive.ics.uci.edu/ml/datasets/microblogPCU)。
 
 这个数据集被原作者用于探索微博中的spammers（发送垃圾信息的人）。他们的demo在[这里](http://sd.skyclass.net:8080/Spammer/dia.jsp)。
 

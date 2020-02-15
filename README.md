@@ -12,7 +12,7 @@
 - 数据库
 - 大数据计算
 
-
+![](examples/basalt.jpg)
 
 ## 服务
 
@@ -85,13 +85,20 @@ HTTP服务路径列表如下：
 - `/diffstore/:dst/:name1/:name2`
 - `/stats/:name`
 
+## 例子
+
+以微博关注关系数据集做例子，我们使用Bitmap服务来存储某人是否关注了某人，以及两人是否互相关注。
+
+例子参看 [weibo_follow](https://github.com/rpcxio/basalt/tree/master/examples/weibo)
+
+
 ## Roadmap
 
 - [x] Multiple-key Bitmap
 - [x] rpcx services for Bitmap
 - [x] HTTP services for Bitmap
 - [x] Redis services for Bitmap
-- [ ] Persistence
+- [x] Persistence
 - [ ] Master-Slave mode
 
 ## Credits
