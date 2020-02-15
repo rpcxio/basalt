@@ -326,8 +326,11 @@ github.com/sirupsen/logrus v1.2.0 h1:juTguoYk5qI21pwyTXY3B3Y5cOTH3ZUyZCg1v/mihuo
 github.com/sirupsen/logrus v1.2.0/go.mod h1:LxeOpSwHxABJmUn/MG1IvRgCAasNZTLOkJPxbbu5VWo=
 github.com/smallnest/libkv-etcdv3-store v0.0.0-20191101045330-f92940446965 h1:YQtdLz+7JQdKn7f5cG+xSrSbI7X4jObx0Jy6ZzffGew=
 github.com/smallnest/libkv-etcdv3-store v0.0.0-20191101045330-f92940446965/go.mod h1:SYR75Tf6jJoZ8wZca3fqyzXorUyOwnorUYIKv4T+u9Q=
+github.com/smallnest/log v0.0.0-20190128090703-5dc5752d8772 h1:jJZt9z9XNMhBc/GwKYYIsuFe32H/RgZoQdiNMWSlqg8=
+github.com/smallnest/log v0.0.0-20190128090703-5dc5752d8772/go.mod h1:TpyTiodXNHQQOupXebpINKWbiufMLzuDrc4rZfyx4Ls=
 github.com/smallnest/rpcx v0.0.0-20200213044823-78d7a4d32e2a h1:gmwx7GjtIu8aksSHDRZ5EfcRCO1LAt+AysgG0LfOMgo=
 github.com/smallnest/rpcx v0.0.0-20200213044823-78d7a4d32e2a/go.mod h1:r+vj6jQHuO049V0uVSzDlxtSoxpoOUqCYBNtk6lyZmc=
+github.com/smallnest/rpcx v0.0.0-20200214051052-c65a6415f3d1 h1:kmP9SfZjJkvlXRytHcyAd+OUAEcr0JWaMTKxnLACdJE=
 github.com/smallnest/valkeyrie v0.0.0-20191030064635-54a884e4b303 h1:NDOAHb1sE8pYWd0Dge8W6bGQ63FHfa0/QjClXG2hrgw=
 github.com/smallnest/valkeyrie v0.0.0-20191030064635-54a884e4b303/go.mod h1:ixoXqhXnCjUFM17O2cOVoJ98KzDnCb2+iGtJDmtC/qs=
 github.com/smartystreets/assertions v0.0.0-20180927180507-b2de0cb4f26d h1:zE9ykElWQ6/NYmHa3jpm/yHnI4xSofP+UP6SpjHcSeM=

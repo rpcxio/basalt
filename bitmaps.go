@@ -1,9 +1,12 @@
 package basalt
 
 import (
+	"encoding/binary"
+	"io"
 	"sync"
 
 	"github.com/RoaringBitmap/roaring"
+	"github.com/smallnest/log"
 )
 
 // Bitmaps contains all bitmaps of namespace.
@@ -310,4 +313,103 @@ func (bs *Bitmaps) DiffStore(destination, name1, name2 string) uint64 {
 	bs.mu.Unlock()
 
 	return bm.GetCardinality()
+}
+
+// Save saves bitmaps to the io.Writer.
+func (bs *Bitmaps) Save(w io.Writer) error {
+	var keys []string
+	bs.mu.RLock()
+	for k := range bs.bitmaps {
+		keys = append(keys, k)
+	}
+	bs.mu.RUnlock()
+
+	for _, k := range keys {
+		bs.mu.RLock()
+		bm := bs.bitmaps[k]
+		bs.mu.RUnlock()
+		if bm != nil {
+			if err := saveBitmap(w, k, bm.bitmap); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+func saveBitmap(w io.Writer, name string, bm *roaring.Bitmap) error {
+	if bm == nil {
+		return nil
+	}
+
+	err := binary.Write(w, binary.LittleEndian, uint32(len(name)))
+	if err != nil {
+		log.Errorf("failed to write len of name %s: %v", name, err)
+		return err
+	}
+	_, err = w.Write([]byte(name))
+	if err != nil {
+		log.Errorf("failed to write name %s: %v", name, err)
+		return err
+	}
+
+	_, err = bm.WriteTo(w)
+	if err != nil {
+		log.Errorf("failed to write bitmap %s: %v", name, err)
+		return err
+	}
+
+	return nil
+}
+
+// Read restores bitmaps from a io.Reader.
+func (bs *Bitmaps) Read(r io.Reader) error {
+	for {
+		name, bm, err := readBitmap(r)
+		if err == io.EOF {
+			return nil
+		}
+		if err != nil {
+			return err
+		}
+
+		b := &Bitmap{
+			bitmap: bm,
+		}
+
+		bs.mu.Lock()
+		bs.bitmaps[name] = b
+		bs.mu.Unlock()
+
+	}
+}
+
+func readBitmap(r io.Reader) (name string, bm *roaring.Bitmap, err error) {
+	var l uint32
+	err = binary.Read(r, binary.LittleEndian, &l)
+	if err != nil {
+		if err == io.EOF {
+			return "", nil, err
+		}
+		log.Errorf("failed to read len of name: %v", err)
+		return "", nil, err
+	}
+
+	var data = make([]byte, int(l))
+	_, err = io.ReadFull(r, data)
+	if err != nil {
+		log.Errorf("failed to read name: %v", err)
+		return "", nil, err
+	}
+	name = string(data)
+
+	bm = roaring.NewBitmap()
+	_, err = bm.ReadFrom(r)
+	if err != nil {
+		log.Errorf("failed to read name %s: %v", name, err)
+		return "", nil, err
+	}
+
+	return name, bm, nil
 }

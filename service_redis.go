@@ -9,7 +9,7 @@ import (
 
 // RedisService is a redis service only supports bitmap commands.
 type RedisService struct {
-	bitmaps *Bitmaps
+	s *Server
 }
 
 func (rs *RedisService) redisAccept(conn redcon.Conn) bool {
@@ -40,7 +40,7 @@ func (rs *RedisService) redisHandler(conn redcon.Conn, cmd redcon.Command) {
 			return
 		}
 
-		rs.bitmaps.Add(string(cmd.Args[1]), v)
+		rs.s.bitmaps.Add(string(cmd.Args[1]), v)
 		conn.WriteInt(1)
 
 	case "bmaddmany": // bitmap addmany
@@ -55,7 +55,7 @@ func (rs *RedisService) redisHandler(conn redcon.Conn, cmd redcon.Command) {
 			return
 		}
 
-		rs.bitmaps.AddMany(string(cmd.Args[1]), values)
+		rs.s.bitmaps.AddMany(string(cmd.Args[1]), values)
 		conn.WriteInt(len(values))
 
 	case "bmdel": // bitmap remove
@@ -70,7 +70,7 @@ func (rs *RedisService) redisHandler(conn redcon.Conn, cmd redcon.Command) {
 			return
 		}
 
-		rs.bitmaps.Remove(string(cmd.Args[1]), v)
+		rs.s.bitmaps.Remove(string(cmd.Args[1]), v)
 		conn.WriteInt(1)
 
 	case "bmdrop": // bitmap remove_bitmap
@@ -79,7 +79,7 @@ func (rs *RedisService) redisHandler(conn redcon.Conn, cmd redcon.Command) {
 			return
 		}
 
-		rs.bitmaps.RemoveBitmap(string(cmd.Args[1]))
+		rs.s.bitmaps.RemoveBitmap(string(cmd.Args[1]))
 		conn.WriteString("OK")
 
 	case "bmclear": // bitmap clear_bitmap
@@ -88,7 +88,7 @@ func (rs *RedisService) redisHandler(conn redcon.Conn, cmd redcon.Command) {
 			return
 		}
 
-		rs.bitmaps.ClearBitmap(string(cmd.Args[1]))
+		rs.s.bitmaps.ClearBitmap(string(cmd.Args[1]))
 		conn.WriteString("OK")
 	case "bmcard": // bitmap clear_bitmap
 		if len(cmd.Args) != 2 {
@@ -96,7 +96,7 @@ func (rs *RedisService) redisHandler(conn redcon.Conn, cmd redcon.Command) {
 			return
 		}
 
-		count := rs.bitmaps.Card(string(cmd.Args[1]))
+		count := rs.s.bitmaps.Card(string(cmd.Args[1]))
 		conn.WriteInt64(int64(count))
 
 	case "bmexists": // bitmap exists
@@ -111,7 +111,7 @@ func (rs *RedisService) redisHandler(conn redcon.Conn, cmd redcon.Command) {
 			return
 		}
 
-		existed := rs.bitmaps.Exists(string(cmd.Args[1]), v)
+		existed := rs.s.bitmaps.Exists(string(cmd.Args[1]), v)
 		if existed {
 			conn.WriteInt(1)
 		} else {
@@ -125,7 +125,7 @@ func (rs *RedisService) redisHandler(conn redcon.Conn, cmd redcon.Command) {
 		}
 
 		names := bytes2string(cmd.Args[1:])
-		rt := rs.bitmaps.Inter(names...)
+		rt := rs.s.bitmaps.Inter(names...)
 
 		conn.WriteArray(len(rt))
 		for _, v := range rt {
@@ -139,7 +139,7 @@ func (rs *RedisService) redisHandler(conn redcon.Conn, cmd redcon.Command) {
 		}
 
 		names := bytes2string(cmd.Args[1:])
-		count := rs.bitmaps.InterStore(names[0], names[1:]...)
+		count := rs.s.bitmaps.InterStore(names[0], names[1:]...)
 		conn.WriteInt64(int64(count))
 
 	case "bmunion": // bitmap union
@@ -149,7 +149,7 @@ func (rs *RedisService) redisHandler(conn redcon.Conn, cmd redcon.Command) {
 		}
 
 		names := bytes2string(cmd.Args[1:])
-		rt := rs.bitmaps.Union(names...)
+		rt := rs.s.bitmaps.Union(names...)
 
 		conn.WriteArray(len(rt))
 		for _, v := range rt {
@@ -162,7 +162,7 @@ func (rs *RedisService) redisHandler(conn redcon.Conn, cmd redcon.Command) {
 		}
 
 		names := bytes2string(cmd.Args[1:])
-		count := rs.bitmaps.UnionStore(names[0], names[1:]...)
+		count := rs.s.bitmaps.UnionStore(names[0], names[1:]...)
 		conn.WriteInt64(int64(count))
 
 	case "bmxor": // bitmap xor
@@ -171,7 +171,7 @@ func (rs *RedisService) redisHandler(conn redcon.Conn, cmd redcon.Command) {
 			return
 		}
 
-		rt := rs.bitmaps.Xor(string(cmd.Args[1]), string(cmd.Args[2]))
+		rt := rs.s.bitmaps.Xor(string(cmd.Args[1]), string(cmd.Args[2]))
 
 		conn.WriteArray(len(rt))
 		for _, v := range rt {
@@ -183,7 +183,7 @@ func (rs *RedisService) redisHandler(conn redcon.Conn, cmd redcon.Command) {
 			return
 		}
 
-		count := rs.bitmaps.XorStore(string(cmd.Args[1]), string(cmd.Args[2]), string(cmd.Args[3]))
+		count := rs.s.bitmaps.XorStore(string(cmd.Args[1]), string(cmd.Args[2]), string(cmd.Args[3]))
 		conn.WriteInt64(int64(count))
 
 	case "bmdiff": // bitmap diff
@@ -192,7 +192,7 @@ func (rs *RedisService) redisHandler(conn redcon.Conn, cmd redcon.Command) {
 			return
 		}
 
-		rt := rs.bitmaps.Diff(string(cmd.Args[1]), string(cmd.Args[2]))
+		rt := rs.s.bitmaps.Diff(string(cmd.Args[1]), string(cmd.Args[2]))
 
 		conn.WriteArray(len(rt))
 		for _, v := range rt {
@@ -204,7 +204,7 @@ func (rs *RedisService) redisHandler(conn redcon.Conn, cmd redcon.Command) {
 			return
 		}
 
-		count := rs.bitmaps.DiffStore(string(cmd.Args[1]), string(cmd.Args[2]), string(cmd.Args[3]))
+		count := rs.s.bitmaps.DiffStore(string(cmd.Args[1]), string(cmd.Args[2]), string(cmd.Args[3]))
 		conn.WriteInt64(int64(count))
 	case "bmstats": // bitmap diff store
 		if len(cmd.Args) != 2 {
@@ -212,7 +212,7 @@ func (rs *RedisService) redisHandler(conn redcon.Conn, cmd redcon.Command) {
 			return
 		}
 
-		stats := rs.bitmaps.Stats(string(cmd.Args[1]))
+		stats := rs.s.bitmaps.Stats(string(cmd.Args[1]))
 
 		var sb strings.Builder
 		appendMetric(&sb, "cardinality", stats.Cardinality)
@@ -231,6 +231,19 @@ func (rs *RedisService) redisHandler(conn redcon.Conn, cmd redcon.Command) {
 		appendMetric(&sb, "RunContainerValues", stats.RunContainerValues)
 
 		conn.WriteBulkString(sb.String())
+	case "bmsave": // bitmap persist
+		if len(cmd.Args) != 1 {
+			conn.WriteError("ERR wrong number of arguments for '" + string(cmd.Args[0]) + "' command")
+			return
+		}
+
+		err := rs.s.Save()
+		if err != nil {
+			conn.WriteError("ERR save because of " + err.Error())
+			return
+		}
+
+		conn.WriteInt(1)
 	}
 }
 

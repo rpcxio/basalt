@@ -13,8 +13,8 @@ import (
 
 // HTTPService is a http service.
 type HTTPService struct {
-	router  *httprouter.Router
-	bitmaps *Bitmaps
+	router *httprouter.Router
+	s      *Server
 }
 
 // Serve serves http service.
@@ -49,6 +49,7 @@ func (s *HTTPService) config() {
 	router.GET("/diffstore/:dst/:name1/:name2", s.diffStore)
 
 	router.GET("/stats/:name", s.stats)
+	router.GET("/save", s.save)
 }
 
 func (s *HTTPService) add(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
@@ -59,7 +60,7 @@ func (s *HTTPService) add(w http.ResponseWriter, r *http.Request, ps httprouter.
 		http.Error(w, err.Error(), http.StatusBadRequest)
 	}
 
-	s.bitmaps.Add(name, v)
+	s.s.bitmaps.Add(name, v)
 }
 
 func (s *HTTPService) addMany(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
@@ -70,7 +71,7 @@ func (s *HTTPService) addMany(w http.ResponseWriter, r *http.Request, ps httprou
 		http.Error(w, err.Error(), http.StatusBadRequest)
 	}
 
-	s.bitmaps.AddMany(name, vs)
+	s.s.bitmaps.AddMany(name, vs)
 }
 
 func (s *HTTPService) remove(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
@@ -81,22 +82,22 @@ func (s *HTTPService) remove(w http.ResponseWriter, r *http.Request, ps httprout
 		http.Error(w, err.Error(), http.StatusBadRequest)
 	}
 
-	s.bitmaps.Remove(name, v)
+	s.s.bitmaps.Remove(name, v)
 }
 
 func (s *HTTPService) drop(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	name := ps.ByName("name")
-	s.bitmaps.RemoveBitmap(name)
+	s.s.bitmaps.RemoveBitmap(name)
 }
 
 func (s *HTTPService) clear(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	name := ps.ByName("name")
-	s.bitmaps.ClearBitmap(name)
+	s.s.bitmaps.ClearBitmap(name)
 }
 
 func (s *HTTPService) card(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	name := ps.ByName("name")
-	count := s.bitmaps.Card(name)
+	count := s.s.bitmaps.Card(name)
 	w.Write([]byte(strconv.FormatUint(count, 10)))
 }
 
@@ -108,7 +109,7 @@ func (s *HTTPService) exists(w http.ResponseWriter, r *http.Request, ps httprout
 		http.Error(w, err.Error(), http.StatusBadRequest)
 	}
 
-	existed := s.bitmaps.Exists(name, v)
+	existed := s.s.bitmaps.Exists(name, v)
 	if !existed {
 		http.Error(w, "not found", http.StatusNotFound)
 	}
@@ -116,7 +117,7 @@ func (s *HTTPService) exists(w http.ResponseWriter, r *http.Request, ps httprout
 
 func (s *HTTPService) inter(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	names := strings.Split(ps.ByName("name"), ",")
-	rt := s.bitmaps.Inter(names...)
+	rt := s.s.bitmaps.Inter(names...)
 
 	w.Write([]byte(ints2str(rt)))
 }
@@ -124,14 +125,14 @@ func (s *HTTPService) inter(w http.ResponseWriter, r *http.Request, ps httproute
 func (s *HTTPService) interStore(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	dst := ps.ByName("dst")
 	names := strings.Split(ps.ByName("name"), ",")
-	count := s.bitmaps.InterStore(dst, names...)
+	count := s.s.bitmaps.InterStore(dst, names...)
 
 	w.Write([]byte(strconv.FormatUint(count, 10)))
 }
 
 func (s *HTTPService) union(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	names := strings.Split(ps.ByName("name"), ",")
-	rt := s.bitmaps.Union(names...)
+	rt := s.s.bitmaps.Union(names...)
 
 	w.Write([]byte(ints2str(rt)))
 }
@@ -139,7 +140,7 @@ func (s *HTTPService) union(w http.ResponseWriter, r *http.Request, ps httproute
 func (s *HTTPService) unionStore(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	dst := ps.ByName("dst")
 	names := strings.Split(ps.ByName("name"), ",")
-	count := s.bitmaps.UnionStore(dst, names...)
+	count := s.s.bitmaps.UnionStore(dst, names...)
 
 	w.Write([]byte(strconv.FormatUint(count, 10)))
 }
@@ -147,7 +148,7 @@ func (s *HTTPService) unionStore(w http.ResponseWriter, r *http.Request, ps http
 func (s *HTTPService) xor(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	name1 := ps.ByName("name1")
 	name2 := ps.ByName("name2")
-	rt := s.bitmaps.Xor(name1, name2)
+	rt := s.s.bitmaps.Xor(name1, name2)
 
 	w.Write([]byte(ints2str(rt)))
 }
@@ -156,7 +157,7 @@ func (s *HTTPService) xorStore(w http.ResponseWriter, r *http.Request, ps httpro
 	dst := ps.ByName("dst")
 	name1 := ps.ByName("name1")
 	name2 := ps.ByName("name2")
-	count := s.bitmaps.XorStore(dst, name1, name2)
+	count := s.s.bitmaps.XorStore(dst, name1, name2)
 
 	w.Write([]byte(strconv.FormatUint(count, 10)))
 }
@@ -164,7 +165,7 @@ func (s *HTTPService) xorStore(w http.ResponseWriter, r *http.Request, ps httpro
 func (s *HTTPService) diff(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	name1 := ps.ByName("name1")
 	name2 := ps.ByName("name2")
-	rt := s.bitmaps.Diff(name1, name2)
+	rt := s.s.bitmaps.Diff(name1, name2)
 
 	w.Write([]byte(ints2str(rt)))
 }
@@ -173,20 +174,27 @@ func (s *HTTPService) diffStore(w http.ResponseWriter, r *http.Request, ps httpr
 	dst := ps.ByName("dst")
 	name1 := ps.ByName("name1")
 	name2 := ps.ByName("name2")
-	count := s.bitmaps.DiffStore(dst, name1, name2)
+	count := s.s.bitmaps.DiffStore(dst, name1, name2)
 
 	w.Write([]byte(strconv.FormatUint(count, 10)))
 }
 
 func (s *HTTPService) stats(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	name := ps.ByName("name")
-	stats := s.bitmaps.Stats(name)
+	stats := s.s.bitmaps.Stats(name)
 	w.Header().Set("Content-Type", "application/json")
 	data, err := json.Marshal(stats)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 	w.Write(data)
+}
+
+func (s *HTTPService) save(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	err := s.s.Save()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+	}
 }
 
 func ints2str(vs []uint32) string {
