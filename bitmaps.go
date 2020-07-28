@@ -329,7 +329,7 @@ func (bs *Bitmaps) Save(w io.Writer) error {
 		bm := bs.bitmaps[k]
 		bs.mu.RUnlock()
 		if bm != nil {
-			if err := saveBitmap(w, k, bm.bitmap); err != nil {
+			if err := bs.saveBitmap(w, k, bm.bitmap); err != nil {
 				return err
 			}
 		}
@@ -338,7 +338,7 @@ func (bs *Bitmaps) Save(w io.Writer) error {
 	return nil
 }
 
-func saveBitmap(w io.Writer, name string, bm *roaring.Bitmap) error {
+func (bs *Bitmaps) saveBitmap(w io.Writer, name string, bm *roaring.Bitmap) error {
 	if bm == nil {
 		return nil
 	}
@@ -354,7 +354,10 @@ func saveBitmap(w io.Writer, name string, bm *roaring.Bitmap) error {
 		return err
 	}
 
-	_, err = bm.WriteTo(w)
+	bs.mu.RLock()
+	pBitmap := bm.Clone()
+	bs.mu.RUnlock()
+	_, err = pBitmap.WriteTo(w)
 	if err != nil {
 		log.Errorf("failed to write bitmap %s: %v", name, err)
 		return err
