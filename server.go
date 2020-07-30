@@ -164,3 +164,41 @@ func (s *Server) Restore() error {
 
 	return file.Close()
 }
+
+func (s *Server) add(name, value string, callback bool) error {
+	v, err := str2uint32(value)
+	if err != nil {
+		return err
+	}
+
+	s.bitmaps.Add(name, v, callback)
+	return nil
+}
+
+func (s *Server) addMany(name, values string, callback bool) error {
+	vs, err := str2uint32s(values)
+	if err != nil {
+		return err
+	}
+
+	s.bitmaps.AddMany(name, vs, callback)
+	return nil
+}
+
+func (s *Server) remove(name, value string, callback bool) error {
+	v, err := str2uint32(value)
+	if err != nil {
+		return err
+	}
+
+	s.bitmaps.Remove(name, v, callback)
+	return err
+}
+
+func (s *Server) drop(name string, callback bool) {
+	s.bitmaps.RemoveBitmap(name, callback)
+}
+
+func (s *Server) clear(name string, callback bool) {
+	s.bitmaps.ClearBitmap(name, callback)
+}

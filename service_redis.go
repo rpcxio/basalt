@@ -40,7 +40,7 @@ func (rs *RedisService) redisHandler(conn redcon.Conn, cmd redcon.Command) {
 			return
 		}
 
-		rs.s.bitmaps.Add(string(cmd.Args[1]), v)
+		rs.s.bitmaps.Add(string(cmd.Args[1]), v, true)
 		conn.WriteInt(1)
 
 	case "bmaddmany": // bitmap addmany
@@ -55,7 +55,7 @@ func (rs *RedisService) redisHandler(conn redcon.Conn, cmd redcon.Command) {
 			return
 		}
 
-		rs.s.bitmaps.AddMany(string(cmd.Args[1]), values)
+		rs.s.bitmaps.AddMany(string(cmd.Args[1]), values, true)
 		conn.WriteInt(len(values))
 
 	case "bmdel": // bitmap remove
@@ -70,7 +70,7 @@ func (rs *RedisService) redisHandler(conn redcon.Conn, cmd redcon.Command) {
 			return
 		}
 
-		rs.s.bitmaps.Remove(string(cmd.Args[1]), v)
+		rs.s.bitmaps.Remove(string(cmd.Args[1]), v, true)
 		conn.WriteInt(1)
 
 	case "bmdrop": // bitmap remove_bitmap
@@ -79,7 +79,7 @@ func (rs *RedisService) redisHandler(conn redcon.Conn, cmd redcon.Command) {
 			return
 		}
 
-		rs.s.bitmaps.RemoveBitmap(string(cmd.Args[1]))
+		rs.s.bitmaps.RemoveBitmap(string(cmd.Args[1]), true)
 		conn.WriteString("OK")
 
 	case "bmclear": // bitmap clear_bitmap
@@ -88,7 +88,7 @@ func (rs *RedisService) redisHandler(conn redcon.Conn, cmd redcon.Command) {
 			return
 		}
 
-		rs.s.bitmaps.ClearBitmap(string(cmd.Args[1]))
+		rs.s.bitmaps.ClearBitmap(string(cmd.Args[1]), true)
 		conn.WriteString("OK")
 	case "bmcard": // bitmap clear_bitmap
 		if len(cmd.Args) != 2 {

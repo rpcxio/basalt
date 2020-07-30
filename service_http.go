@@ -55,44 +55,41 @@ func (s *HTTPService) config() {
 func (s *HTTPService) add(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	name := ps.ByName("name")
 	value := ps.ByName("value")
-	v, err := str2uint32(value)
+	err := s.s.add(name, value, true)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
 	}
-
-	s.s.bitmaps.Add(name, v)
 }
 
 func (s *HTTPService) addMany(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	name := ps.ByName("name")
 	values := ps.ByName("values")
-	vs, err := str2uint32s(values)
+	err := s.s.addMany(name, values, true)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
 	}
-
-	s.s.bitmaps.AddMany(name, vs)
 }
 
 func (s *HTTPService) remove(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	name := ps.ByName("name")
 	value := ps.ByName("value")
-	v, err := str2uint32(value)
+	err := s.s.remove(name, value, true)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
 	}
-
-	s.s.bitmaps.Remove(name, v)
 }
 
 func (s *HTTPService) drop(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	name := ps.ByName("name")
-	s.s.bitmaps.RemoveBitmap(name)
+	s.s.drop(name, true)
 }
 
 func (s *HTTPService) clear(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	name := ps.ByName("name")
-	s.s.bitmaps.ClearBitmap(name)
+	s.s.clear(name, true)
 }
 
 func (s *HTTPService) card(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {

@@ -47,35 +47,35 @@ type BitmapDstAndPairRequest struct {
 
 // Add adds a value in the bitmap with name.
 func (s *RpcxBitmapService) Add(ctx context.Context, req *BitmapValueRequest, reply *bool) error {
-	s.s.bitmaps.Add(req.Name, req.Value)
+	s.s.bitmaps.Add(req.Name, req.Value, true)
 	*reply = true
 	return nil
 }
 
 // AddMany adds multiple values in the bitmap with name.
 func (s *RpcxBitmapService) AddMany(ctx context.Context, req *BitmapValuesRequest, reply *bool) error {
-	s.s.bitmaps.AddMany(req.Name, req.Values)
+	s.s.bitmaps.AddMany(req.Name, req.Values, true)
 	*reply = true
 	return nil
 }
 
 // Remove removes a value in the bitmap with name.
 func (s *RpcxBitmapService) Remove(ctx context.Context, req *BitmapValueRequest, reply *bool) error {
-	s.s.bitmaps.Remove(req.Name, req.Value)
+	s.s.bitmaps.Remove(req.Name, req.Value, true)
 	*reply = true
 	return nil
 }
 
 // RemoveBitmap removes the bitmap.
 func (s *RpcxBitmapService) RemoveBitmap(ctx context.Context, name string, reply *bool) error {
-	s.s.bitmaps.RemoveBitmap(name)
+	s.s.bitmaps.RemoveBitmap(name, true)
 	*reply = true
 	return nil
 }
 
 // ClearBitmap clears the bitmap and set it to be empty.
 func (s *RpcxBitmapService) ClearBitmap(ctx context.Context, name string, reply *bool) error {
-	s.s.bitmaps.ClearBitmap(name)
+	s.s.bitmaps.ClearBitmap(name, true)
 	*reply = true
 	return nil
 }

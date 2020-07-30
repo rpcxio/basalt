@@ -2,6 +2,7 @@ package basalt
 
 import (
 	"encoding/binary"
+	"fmt"
 	"io"
 	"sync"
 
@@ -9,10 +10,22 @@ import (
 	"github.com/smallnest/log"
 )
 
+// OP bitmaps operations
+type OP byte
+
+const (
+	BmOpAdd     OP = 1
+	BmOpAddMany    = 2
+	BmOpRemove     = 3
+	BmOpDrop       = 4
+	BmOpClear      = 5
+)
+
 // Bitmaps contains all bitmaps of namespace.
 type Bitmaps struct {
-	mu      sync.RWMutex
-	bitmaps map[string]*Bitmap
+	mu            sync.RWMutex
+	bitmaps       map[string]*Bitmap
+	writeCallback func(op OP, value string)
 }
 
 // NewBitmaps creates a Bitmaps.
@@ -29,7 +42,12 @@ type Bitmap struct {
 }
 
 // Add adds a value.
-func (bs *Bitmaps) Add(name string, v uint32) {
+func (bs *Bitmaps) Add(name string, v uint32, callback bool) {
+	if bs.writeCallback != nil && callback {
+		bs.writeCallback(BmOpAdd, fmt.Sprintf("%s,%d", name, v))
+		return
+	}
+
 	bs.mu.Lock()
 	bm := bs.bitmaps[name]
 	if bm == nil {
@@ -46,7 +64,12 @@ func (bs *Bitmaps) Add(name string, v uint32) {
 }
 
 // AddMany adds multiple values.
-func (bs *Bitmaps) AddMany(name string, v []uint32) {
+func (bs *Bitmaps) AddMany(name string, v []uint32, callback bool) {
+	if bs.writeCallback != nil && callback {
+		bs.writeCallback(BmOpAddMany, fmt.Sprintf("%s,%d", name, ints2str(v)))
+		return
+	}
+
 	bs.mu.Lock()
 	bm := bs.bitmaps[name]
 	if bm == nil {
@@ -63,7 +86,12 @@ func (bs *Bitmaps) AddMany(name string, v []uint32) {
 }
 
 // Remove removes a value.
-func (bs *Bitmaps) Remove(name string, v uint32) {
+func (bs *Bitmaps) Remove(name string, v uint32, callback bool) {
+	if bs.writeCallback != nil && callback {
+		bs.writeCallback(BmOpRemove, fmt.Sprintf("%s,%d", name, v))
+		return
+	}
+
 	bs.mu.Lock()
 	bm := bs.bitmaps[name]
 	if bm == nil {
@@ -80,14 +108,24 @@ func (bs *Bitmaps) Remove(name string, v uint32) {
 }
 
 // RemoveBitmap removes a bitmap.
-func (bs *Bitmaps) RemoveBitmap(name string) {
+func (bs *Bitmaps) RemoveBitmap(name string, callback bool) {
+	if bs.writeCallback != nil && callback {
+		bs.writeCallback(BmOpDrop, name)
+		return
+	}
+
 	bs.mu.Lock()
 	delete(bs.bitmaps, name)
 	bs.mu.Unlock()
 }
 
 // ClearBitmap clear a bitmap.
-func (bs *Bitmaps) ClearBitmap(name string) {
+func (bs *Bitmaps) ClearBitmap(name string, callback bool) {
+	if bs.writeCallback != nil && callback {
+		bs.writeCallback(BmOpClear, name)
+		return
+	}
+
 	bs.mu.RLock()
 	bm := bs.bitmaps[name]
 	if bm == nil {
