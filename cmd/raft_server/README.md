@@ -20,7 +20,7 @@ basalt --id 3 --peers http://127.0.0.1:12379,http://127.0.0.1:22379,http://127.0
 
 测试在第一个节点增加一个数据:
 ```sh
- basalt git:(master) ✗ curl "http://127.0.0.1:18972/add/test/1000"
+ basalt git:(master) ✗ curl -X POST "http://127.0.0.1:18972/add/test/1000"
 ```
 
 在第二个节点检查这个数据是否存在，正常应该返回`200 OK`

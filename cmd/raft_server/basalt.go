@@ -44,7 +44,10 @@ func main() {
 	getSnapshot := func() ([]byte, error) { return raftServer.GetSnapshot() }
 	commitC, errorC, snapshotterReady := basalt.NewRaftNode(*id, strings.Split(*peers, ","), *join, getSnapshot, proposeC, confChangeC)
 
-	raftServer = basalt.NewRaftServer(srv, <-snapshotterReady, proposeC, commitC, errorC)
+	raftServer = basalt.NewRaftServer(srv, <-snapshotterReady, confChangeC, proposeC, commitC, errorC)
+
+	// set confchange handler
+	srv.SetConfChangeCallback(raftServer)
 
 	if err := srv.Serve(); err != nil {
 		log.Fatalf("failed to start basalt services:%v", err)

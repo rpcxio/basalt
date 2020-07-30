@@ -7,10 +7,16 @@ import (
 	"strings"
 
 	"github.com/rpcxio/etcd/etcdserver/api/snap"
+	"github.com/rpcxio/etcd/raft/raftpb"
 )
 
+type ConfChange interface {
+	AddNode(id uint64, addr []byte) error
+	RemoveNode(id uint64) error
+}
 type RaftServer struct {
 	proposeC    chan<- string
+	confChangeC chan raftpb.ConfChange
 	bmServer    *Server
 	snapshotter *snap.Snapshotter
 }
@@ -20,8 +26,8 @@ type operaton struct {
 	Val string
 }
 
-func NewRaftServer(bmServer *Server, snapshotter *snap.Snapshotter, proposeC chan<- string, commitC <-chan *string, errorC <-chan error) *RaftServer {
-	s := &RaftServer{proposeC: proposeC, bmServer: bmServer, snapshotter: snapshotter}
+func NewRaftServer(bmServer *Server, snapshotter *snap.Snapshotter, confChangeC chan raftpb.ConfChange, proposeC chan<- string, commitC <-chan *string, errorC <-chan error) *RaftServer {
+	s := &RaftServer{proposeC: proposeC, confChangeC: confChangeC, bmServer: bmServer, snapshotter: snapshotter}
 	bmServer.bitmaps.writeCallback = s.Propose
 	s.readCommits(commitC, errorC)
 	go s.readCommits(commitC, errorC)
@@ -106,4 +112,23 @@ func (s *RaftServer) GetSnapshot() ([]byte, error) {
 func (s *RaftServer) recoverFromSnapshot(snapshot []byte) error {
 	var buf = bytes.NewBuffer(snapshot)
 	return s.bmServer.bitmaps.Read(buf)
+}
+
+func (s *RaftServer) AddNode(id uint64, addr []byte) error {
+	cc := raftpb.ConfChange{
+		Type:    raftpb.ConfChangeAddNode,
+		NodeID:  id,
+		Context: addr,
+	}
+	s.confChangeC <- cc
+	return nil
+}
+
+func (s *RaftServer) RemoveNode(id uint64) error {
+	cc := raftpb.ConfChange{
+		Type:   raftpb.ConfChangeRemoveNode,
+		NodeID: id,
+	}
+	s.confChangeC <- cc
+	return nil
 }

@@ -3,6 +3,7 @@ package basalt
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net"
 	"net/http"
 	"strconv"
@@ -13,8 +14,9 @@ import (
 
 // HTTPService is a http service.
 type HTTPService struct {
-	router *httprouter.Router
-	s      *Server
+	router             *httprouter.Router
+	s                  *Server
+	confChangeCallback ConfChange
 }
 
 // Serve serves http service.
@@ -28,11 +30,11 @@ func (s *HTTPService) config() {
 	router := httprouter.New()
 	s.router = router
 
-	router.GET("/add/:name/:value", s.add)
-	router.GET("/addmany/:name/:values", s.addMany)
-	router.GET("/remove/:name/:value", s.remove)
-	router.GET("/drop/:name", s.drop)
-	router.GET("/clear/:name", s.clear)
+	router.POST("/add/:name/:value", s.add)
+	router.POST("/addmany/:name/:values", s.addMany)
+	router.POST("/remove/:name/:value", s.remove)
+	router.POST("/drop/:name", s.drop)
+	router.POST("/clear/:name", s.clear)
 	router.GET("/exists/:name/:value", s.exists)
 	router.GET("/card/:name", s.card)
 
@@ -49,7 +51,10 @@ func (s *HTTPService) config() {
 	router.GET("/diffstore/:dst/:name1/:name2", s.diffStore)
 
 	router.GET("/stats/:name", s.stats)
-	router.GET("/save", s.save)
+	router.POST("/save", s.save)
+
+	router.POST("/peers/:nodeID", s.addNode)
+	router.DELETE("/peers/:nodeID", s.removeNode)
 }
 
 func (s *HTTPService) add(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
@@ -191,6 +196,45 @@ func (s *HTTPService) save(w http.ResponseWriter, r *http.Request, ps httprouter
 	err := s.s.Save()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusNotFound)
+	}
+}
+
+func (s *HTTPService) addNode(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	nodeID := ps.ByName("nodeID")
+	url, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, "Failed on POST", http.StatusBadRequest)
+		return
+	}
+	id, err := strconv.ParseUint(nodeID, 0, 64)
+	if err != nil {
+		http.Error(w, "Failed on convert ID", http.StatusBadRequest)
+		return
+	}
+
+	if s.confChangeCallback != nil {
+		err = s.confChangeCallback.AddNode(id, url)
+		if err != nil {
+			http.Error(w, "failed to add node: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+	}
+}
+
+func (s *HTTPService) removeNode(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	nodeID := ps.ByName("nodeID")
+	id, err := strconv.ParseUint(nodeID, 0, 64)
+	if err != nil {
+		http.Error(w, "Failed on convert ID", http.StatusBadRequest)
+		return
+	}
+
+	if s.confChangeCallback != nil {
+		err = s.confChangeCallback.RemoveNode(id)
+		if err != nil {
+			http.Error(w, "failed to remove node: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
 	}
 }
 

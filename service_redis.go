@@ -9,7 +9,8 @@ import (
 
 // RedisService is a redis service only supports bitmap commands.
 type RedisService struct {
-	s *Server
+	s                  *Server
+	confChangeCallback ConfChange
 }
 
 func (rs *RedisService) redisAccept(conn redcon.Conn) bool {
@@ -243,6 +244,55 @@ func (rs *RedisService) redisHandler(conn redcon.Conn, cmd redcon.Command) {
 			return
 		}
 
+		conn.WriteInt(1)
+	case "addnode": // add raft node
+		if len(cmd.Args) != 3 {
+			conn.WriteError("ERR wrong number of arguments for '" + string(cmd.Args[0]) + "' command")
+			return
+		}
+
+		if rs.confChangeCallback != nil {
+
+			nodeID := string(cmd.Args[1])
+			url := cmd.Args[2]
+
+			id, err := strconv.ParseUint(nodeID, 0, 64)
+			if err != nil {
+				conn.WriteError("ERR parse id because of " + err.Error())
+				return
+			}
+
+			err = rs.confChangeCallback.AddNode(id, url)
+			if err != nil {
+				conn.WriteError("ERR failed to add node because of " + err.Error())
+				return
+			}
+
+		}
+		conn.WriteInt(1)
+	case "removenode": // remove raft node
+		if len(cmd.Args) != 2 {
+			conn.WriteError("ERR wrong number of arguments for '" + string(cmd.Args[0]) + "' command")
+			return
+		}
+
+		if rs.confChangeCallback != nil {
+
+			nodeID := string(cmd.Args[1])
+
+			id, err := strconv.ParseUint(nodeID, 0, 64)
+			if err != nil {
+				conn.WriteError("ERR parse id because of " + err.Error())
+				return
+			}
+
+			err = rs.confChangeCallback.RemoveNode(id)
+			if err != nil {
+				conn.WriteError("ERR failed to remove node because of " + err.Error())
+				return
+			}
+
+		}
 		conn.WriteInt(1)
 	}
 }

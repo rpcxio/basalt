@@ -11,7 +11,8 @@ type ConfigRpcxOption func(*Server, *server.Server)
 
 // RpcxBitmapService provides the rpcx service for Bitmaps.
 type RpcxBitmapService struct {
-	s *Server
+	s                  *Server
+	confChangeCallback ConfChange
 }
 
 // BitmapValueRequest contains the name of bitmap and value.
@@ -158,4 +159,29 @@ func (s *RpcxBitmapService) Save(ctx context.Context, dummy string, reply *bool)
 		*reply = true
 	}
 	return err
+}
+
+type AddNodeRequest struct {
+	ID   uint64
+	Addr string
+}
+
+// AddNode adds a raft node.
+func (s *RpcxBitmapService) AddNode(ctx context.Context, req *AddNodeRequest, reply *bool) error {
+	if s.confChangeCallback != nil {
+		s.confChangeCallback.AddNode(req.ID, []byte(req.Addr))
+	}
+
+	*reply = true
+	return nil
+}
+
+// RemoveNode removes a raft node.
+func (s *RpcxBitmapService) RemoveNode(ctx context.Context, req uint64, reply *bool) error {
+	if s.confChangeCallback != nil {
+		s.confChangeCallback.RemoveNode(req)
+	}
+
+	*reply = true
+	return nil
 }

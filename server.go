@@ -21,9 +21,10 @@ var (
 
 // Server is the bitmap server that supports multiple services.
 type Server struct {
-	addr    string
-	bitmaps *Bitmaps
-	ln      net.Listener
+	addr               string
+	bitmaps            *Bitmaps
+	ln                 net.Listener
+	confChangeCallback ConfChange
 
 	rpcxOptions []ConfigRpcxOption
 
@@ -38,6 +39,11 @@ func NewServer(addr string, bitmaps *Bitmaps, rpcxOptions []ConfigRpcxOption, pe
 		rpcxOptions: rpcxOptions,
 		persistFile: persistFile,
 	}
+}
+
+// SetConfChangeCallback must invoke before Serve.
+func (s *Server) SetConfChangeCallback(confChangeCallback ConfChange) {
+	s.confChangeCallback = confChangeCallback
 }
 
 // Serve serves basalt services.
@@ -85,7 +91,7 @@ func (s *Server) startRpcxService(ln net.Listener) {
 		opt(s, srv)
 	}
 
-	srv.RegisterName("Bitmap", &RpcxBitmapService{s: s}, "")
+	srv.RegisterName("Bitmap", &RpcxBitmapService{s: s, confChangeCallback: s.confChangeCallback}, "")
 	if err := srv.ServeListener("tcp", ln); err != nil {
 		log.Fatalf("failed to start rpcx services: %v", err)
 	}
@@ -95,7 +101,8 @@ func (s *Server) startRpcxService(ln net.Listener) {
 // It is useful for security purpose.
 func (s *Server) startHTTPService(ln net.Listener) {
 	hs := &HTTPService{
-		s: s,
+		s:                  s,
+		confChangeCallback: s.confChangeCallback,
 	}
 
 	if err := hs.Serve(ln); err != nil {
@@ -105,7 +112,8 @@ func (s *Server) startHTTPService(ln net.Listener) {
 
 func (s *Server) startRedisService(ln net.Listener) {
 	redisService := &RedisService{
-		s: s,
+		s:                  s,
+		confChangeCallback: s.confChangeCallback,
 	}
 	if err := redcon.Serve(ln, redisService.redisHandler, redisService.redisAccept, redisService.redisClose); err != nil {
 		log.Fatalf("failed to start redis services: %v", err)
