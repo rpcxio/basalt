@@ -28,6 +28,14 @@
 
 支持raft集群模式: [basalt集群](https://github.com/rpcxio/basalt/tree/master/cmd/raft_server)
 
+## API接口
+
+basalt位图服务支持三种接口模式：
+
+- HTTP API: 通过http api的方式进行访问
+- Redis模式: 扩展了redis命令，可以通过redis client进行访问
+- rpcx模式: 可以通过rpcx框架进行访问
+
 ### Redis命令
 
 - `ping`: ping-pong消息
