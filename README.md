@@ -1,4 +1,4 @@
-# 分布式的 bitmap 服务
+# 基于Raft的数据一致性分布式的 bitmap 服务
 
 `bitmap`(位图)技术是数据库、大数据和互联网业务等场景下经常使用的一种技术。
 
@@ -23,6 +23,10 @@
 - rpcx: 你可以使用rpcx服务获取高性能的网络调用, `cmd/rpcx_client`是一个rpcx客户端的demo
 - redis: 你可以使用redis客户端访问Bitmap服务(如果你的redis client支持自定义命令), 方便兼容redis调用代码， `cmd/redis_client`是redis demo
 - http: 通过http服务调用，调用简单,支持各种编程语言和脚本，`cmd/http_client/curl.sh`是通过`curl`调用服务
+
+## 集群模式
+
+支持raft集群模式: [basalt集群](https://github.com/rpcxio/basalt/tree/master/cmd/raft_server)
 
 ### Redis命令
 
@@ -99,7 +103,7 @@ HTTP服务路径列表如下：
 - [x] HTTP services for Bitmap
 - [x] Redis services for Bitmap
 - [x] Persistence
-- [ ] Master-Slave mode
+- [x] Cluster mode
 
 ## Credits
 
@@ -107,3 +111,4 @@ HTTP服务路径列表如下：
 - [redcon](https://github.com/tidwall/redcon)
 - [httprouter](https://github.com/julienschmidt/httprouter)
 - [rpcx](https://github.com/smallnest/rpcx)
+- [etcd](https://github.com/etcd-io/etcd)
