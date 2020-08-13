@@ -14,6 +14,15 @@
 
 ![](examples/basalt.jpg)
 
+## 架构图
+
+![](doc/architecture.png)
+
+支持三种协议读写: `HTTP`、`redcis`和`rpcx`。
+
+`写`操作可以发给任意节点，但最终是由raft leader节点进行操作。
+`读`操作可以选择任意的节点进行读取。
+
 ## 服务
 
 进入`cmd/server`, 运行`go run server.go`启动一个bitmap服务。
